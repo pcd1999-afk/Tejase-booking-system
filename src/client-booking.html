@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book with TEJASE Healing Arts</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #E8DFD0 0%, #D4C5B0 100%);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            padding: 40px 20px;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(232, 223, 208, 0.85);
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(250, 248, 245, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            background: #8BA888;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 16px; }
+        
+        .content { padding: 30px; }
+        
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #E0E0E0;
+            z-index: 1;
+        }
+        
+        .step {
+            background: white;
+            border: 2px solid #E0E0E0;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            z-index: 2;
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .step.active {
+            background: #8BA888;
+            border-color: #8BA888;
+            color: white;
+        }
+        
+        .step.completed {
+            background: #7ED3B2;
+            border-color: #7ED3B2;
+            color: white;
+        }
+        
+        .form-section {
+            display: none;
+        }
+        
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: #5A6F5A;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .calendar {
+            background: #F8F9FA;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .month-nav {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .nav-btn {
+            background: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background 0.2s;
+            min-height: 44px;
+        }
+        
+        .nav-btn:hover { background: #E0E0E0; }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            text-align: center;
+        }
+        
+        .day-label {
+            font-weight: bold;
+            color: #7F8C8D;
+            padding: 10px 0;
+            font-size: 14px;
+        }
+        
+        .day {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .day:hover:not(.disabled):not(.selected) {
+            background: #E8F4FD;
+            transform: scale(1.05);
+        }
+        
+        .day.selected {
+            background: #8BA888;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .day.disabled {
+            background: #F0EDE7;
+            color: #C5B8A8;
+            cursor: not-allowed;
+        }
+        
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .time-slot {
+            background: white;
+            border: 2px solid #E8F4FD;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .time-slot:hover:not(.selected) {
+            border-color: #8BA888;
+            background: #F0EDE7;
+        }
+        
+        .time-slot.selected {
+            background: #8BA888;
+            color: white;
+            border-color: #8BA888;
+        }
+        
+        .form-group { margin-bottom: 20px; }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #5A6F5A;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            min-height: 44px;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #8BA888;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 44px;
+        }
+        
+        .btn-primary {
+            background: #8BA888;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #7A9877;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 168, 136, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #D4C5B0;
+            color: #5A6F5A;
+        }
+        
+        .btn-secondary:hover {
+            background: #C5B8A8;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .confirmation {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .success-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .confirmation h2 {
+            color: #7ED3B2;
+            margin-bottom: 10px;
+        }
+        
+        .booking-details {
+            background: #F8F9FA;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #7F8C8D;
+        }
+        
+        .detail-value {
+            color: #5A6F5A;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 600px) {
+            .time-slots {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                padding: 20px 10px;
+            }
+            
+            .container {
+                border-radius: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌿 TEJASE Healing Arts</h1>
+            <p>Book Your Session</p>
+        </div>
+        
+        <div class="content">
+            <div class="steps">
+                <div class="step active" id="step1">1</div>
+                <div class="step" id="step2">2</div>
+                <div class="step" id="step3">3</div>
+            </div>
+            
+            <!-- STEP 1: Date Selection -->
+            <div class="form-section active" id="section1">
+                <h2 class="section-title">Select a Date</h2>
+                
+                <div class="calendar">
+                    <div class="calendar-header">
+                        <div class="month-nav">
+                            <button class="nav-btn" id="prevMonth">‹</button>
+                            <strong id="currentMonth">January 2026</strong>
+                            <button class="nav-btn" id="nextMonth">›</button>
+                        </div>
+                    </div>
+                    
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+                
+                <h2 class="section-title">Available Times</h2>
+                <div class="time-slots" id="timeSlots"></div>
+                
+                <div class="button-group">
+                    <button class="btn-primary" id="nextBtn1" disabled>
+                        Next: Your Information →
+                    </button>
+                </div>
+            </div>
+            
+            <!-- STEP 2: Information Form -->
+            <div class="form-section" id="section2">
+                <h2 class="section-title">Your Information</h2>
+                
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" id="name" placeholder="John Doe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" placeholder="john@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" placeholder="(555) 123-4567" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">Additional Notes (Optional)</label>
+                    <textarea id="notes" placeholder="Any special requests or information..."></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn-secondary" id="backBtn2">← Back</button>
+                    <button class="btn-primary" id="nextBtn2">Review Booking →</button>
+                </div>
+            </div>
+            
+            <!-- STEP 3: Confirmation -->
+            <div class="form-section" id="section3">
+                <h2 class="section-title">Review Your Booking</h2>
+                
+                <div class="booking-details" id="reviewDetails"></div>
+                
+                <div class="button-group">
+                    <button class="btn-secondary" id="backBtn3">← Back</button>
+                    <button class="btn-primary" id="confirmBtn">Confirm Booking ✓</button>
+                </div>
+            </div>
+            
+            <!-- SUCCESS MESSAGE -->
+            <div class="form-section" id="successSection">
+                <div class="confirmation">
+                    <div class="success-icon">✓</div>
+                    <h2>Booking Confirmed!</h2>
+                    <p style="color: #7F8C8D; margin-bottom: 20px;">
+                        You'll receive a confirmation email shortly.
+                    </p>
+                    
+                    <div class="booking-details" id="finalDetails"></div>
+                    
+                    <button class="btn-primary" onclick="location.reload()">
+                        Book Another Appointment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const STORAGE_KEY = 'danielleBookingsV2';
+        
+        let currentStep = 1;
+        let selectedDate = null;
+        let selectedTime = null;
+        let currentMonth = new Date();
+        
+        const bookingData = {
+            date: null,
+            time: null,
+            name: '',
+            email: '',
+            phone: '',
+            notes: ''
+        };
+        
+        const availability = {
+            workingDays: [1, 2, 3, 4, 5],
+            timeSlots: ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'],
+            blockedDates: []
+        };
+        
+        function init() {
+            generateCalendar();
+            attachEventListeners();
+        }
+        
+        function generateCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            const monthName = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            document.getElementById('currentMonth').textContent = monthName;
+            
+            const dayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+            dayLabels.forEach(label => {
+                const dayLabel = document.createElement('div');
+                dayLabel.className = 'day-label';
+                dayLabel.textContent = label;
+                grid.appendChild(dayLabel);
+            });
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'day disabled';
+                grid.appendChild(emptyDay);
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day';
+                dayElement.textContent = day;
+                
+                const dayOfWeek = new Date(year, month, day).getDay();
+                const isWorkingDay = availability.workingDays.includes(dayOfWeek);
+                const isBlocked = isDateBlocked(dateStr);
+                const isPast = dateStr < todayStr;
+                
+                if (!isWorkingDay || isBlocked || isPast) {
+                    dayElement.classList.add('disabled');
+                } else {
+                    dayElement.addEventListener('click', () => selectDate(dateStr, dayElement));
+                }
+                
+                grid.appendChild(dayElement);
+            }
+        }
+        
+        function isDateBlocked(dateStr) {
+            const bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            return bookings.some(b => {
+                if (b.type === 'block-range' && b.dates) {
+                    return b.dates.includes(dateStr);
+                }
+                return false;
+            });
+        }
+        
+        function selectDate(dateStr, element) {
+            document.querySelectorAll('.day').forEach(day => day.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedDate = dateStr;
+            bookingData.date = dateStr;
+            generateTimeSlots(dateStr);
+            updateNextButton();
+        }
+        
+        function generateTimeSlots(dateStr) {
+            const container = document.getElementById('timeSlots');
+            container.innerHTML = '';
+            
+            const bookings = getBookingsForDate(dateStr);
+            const bookedTimes = bookings.map(b => b.time);
+            
+            availability.timeSlots.forEach(time => {
+                const slot = document.createElement('div');
+                slot.className = 'time-slot';
+                const formattedTime = formatTime(time);
+                slot.textContent = formattedTime;
+                
+                if (bookedTimes.includes(time)) {
+                    slot.classList.add('disabled');
+                    slot.style.opacity = '0.5';
+                    slot.textContent += ' (Booked)';
+                } else {
+                    slot.addEventListener('click', () => selectTime(time, slot));
+                }
+                
+                container.appendChild(slot);
+            });
+        }
+        
+        function selectTime(time, element) {
+            document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedTime = time;
+            bookingData.time = time;
+            updateNextButton();
+        }
+        
+        function updateNextButton() {
+            const btn = document.getElementById('nextBtn1');
+            btn.disabled = !(selectedDate && selectedTime);
+        }
+        
+        function goToStep(step) {
+            document.querySelectorAll('.form-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(`section${step}`).classList.add('active');
+            
+            for (let i = 1; i <= 3; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                stepEl.classList.remove('active', 'completed');
+                if (i < step) stepEl.classList.add('completed');
+                else if (i === step) stepEl.classList.add('active');
+            }
+            
+            currentStep = step;
+            if (step === 3) showReview();
+        }
+        
+        function showReview() {
+            bookingData.name = document.getElementById('name').value;
+            bookingData.email = document.getElementById('email').value;
+            bookingData.phone = document.getElementById('phone').value;
+            bookingData.notes = document.getElementById('notes').value;
+            
+            const reviewHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Date:</span>
+                    <span class="detail-value">${formatDate(bookingData.date)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Time:</span>
+                    <span class="detail-value">${formatTime(bookingData.time)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Name:</span>
+                    <span class="detail-value">${bookingData.name}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">${bookingData.email}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Phone:</span>
+                    <span class="detail-value">${bookingData.phone}</span>
+                </div>
+                ${bookingData.notes ? `
+                <div class="detail-row">
+                    <span class="detail-label">Notes:</span>
+                    <span class="detail-value">${bookingData.notes}</span>
+                </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('reviewDetails').innerHTML = reviewHTML;
+        }
+        
+        function confirmBooking() {
+            let bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            
+            const booking = {
+                ...bookingData,
+                id: Date.now(),
+                status: 'confirmed',
+                createdAt: new Date().toISOString()
+            };
+            
+            bookings.push(booking);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+            
+            document.getElementById('finalDetails').innerHTML = document.getElementById('reviewDetails').innerHTML;
+            
+            document.querySelectorAll('.form-section').forEach(section => section.classList.remove('active'));
+            document.getElementById('successSection').classList.add('active');
+            
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`step${i}`).classList.remove('active');
+                document.getElementById(`step${i}`).classList.add('completed');
+            }
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+        }
+        
+        function formatTime(time) {
+            const [hours, minutes] = time.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+            return `${displayHour}:${minutes} ${ampm}`;
+        }
+        
+        function getBookingsForDate(dateStr) {
+            const bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            return bookings.filter(b => b.date === dateStr && b.status === 'confirmed');
+        }
+        
+        function attachEventListeners() {
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                currentMonth.setMonth(currentMonth.getMonth() - 1);
+                generateCalendar();
+            });
+            
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                currentMonth.setMonth(currentMonth.getMonth() + 1);
+                generateCalendar();
+            });
+            
+            document.getElementById('nextBtn1').addEventListener('click', () => goToStep(2));
+            document.getElementById('backBtn2').addEventListener('click', () => goToStep(1));
+            document.getElementById('nextBtn2').addEventListener('click', () => {
+                const name = document.getElementById('name').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                
+                if (!name || !email || !phone) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+                
+                goToStep(3);
+            });
+            document.getElementById('backBtn3').addEventListener('click', () => goToStep(2));
+            document.getElementById('confirmBtn').addEventListener('click', confirmBooking);
+        }
+        
+        window.onload = init;
+        
+        // Load custom background image
+        function loadCustomBackground() {
+            try {
+                const settings = JSON.parse(localStorage.getItem('tejaseSettings'));
+                if (settings && settings.backgroundImage) {
+                    document.body.style.backgroundImage = `url(${settings.backgroundImage})`;
+                    console.log('✓ Custom background loaded on booking page');
+                }
+            } catch (error) {
+                console.error('Error loading background:', error);
+            }
+        }
+        
+        // Load background after page loads
+        loadCustomBackground();
+    </script>
+</body>
+</html>

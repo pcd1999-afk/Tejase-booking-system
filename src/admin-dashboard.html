@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - TEJASE Healing Arts</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #F5F1E8; 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(245, 241, 232, 0.9);
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .header, .container, .modal { position: relative; z-index: 1; }
+        .header { background: white; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .logo { font-size: 24px; font-weight: 700; color: #8BA888; }
+        .header-right { display: flex; align-items: center; gap: 20px; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #8BA888; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+        .btn-logout { background: #E74C3C; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        .btn-logout:hover { background: #C0392B; }
+        .nav-tabs { display: flex; gap: 10px; }
+        .nav-tab { background: none; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; color: #7F8C8D; transition: all 0.2s; font-size: 15px; }
+        .nav-tab:hover { background: #F0F0F0; }
+        .nav-tab.active { background: #8BA888; color: white; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 40px 20px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .stat-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-value { font-size: 36px; font-weight: 700; color: #8BA888; margin-bottom: 8px; }
+        .stat-label { color: #7F8C8D; font-size: 14px; }
+        .section { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 30px; overflow: hidden; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-bottom: 1px solid #E0E0E0; }
+        .section-title { font-size: 20px; font-weight: 600; color: #2C3E50; }
+        .section-content { padding: 30px; }
+        .calendar-view { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: visible; }
+        .calendar-wrapper { position: relative; overflow-x: auto; overflow-y: visible; }
+        .calendar-header-main { display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-bottom: 1px solid #E0E0E0; background: #F8F9FA; flex-wrap: wrap; gap: 15px; }
+        .calendar-nav { display: flex; align-items: center; gap: 20px; }
+        .calendar-nav-btn { background: white; border: 2px solid #E0E0E0; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .calendar-nav-btn:hover { border-color: #8BA888; color: #8BA888; }
+        .current-month-display { font-size: 20px; font-weight: 600; color: #2C3E50; min-width: 200px; text-align: center; }
+        .calendar-grid-main { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #E0E0E0; padding: 1px; min-width: 900px; }
+        .calendar-day-header { background: #F8F9FA; padding: 15px; text-align: center; font-weight: 600; color: #7F8C8D; font-size: 14px; }
+        .calendar-day-cell { background: white; min-height: 120px; padding: 8px; position: relative; cursor: pointer; transition: background 0.2s; }
+        .calendar-day-cell:hover { background: #F8F9FA; }
+        .calendar-day-cell.other-month { background: #F8F9FA; opacity: 0.5; }
+        .calendar-day-cell.today { background: #F0EDE7; }
+        .day-number { font-weight: 600; color: #2C3E50; margin-bottom: 5px; font-size: 14px; }
+        .calendar-day-cell.today .day-number { color: #8BA888; background: #8BA888; color: white; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .day-bookings { display: flex; flex-direction: column; gap: 3px; }
+        .calendar-booking { background: #8BA888; color: white; padding: 4px 6px; border-radius: 4px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .calendar-booking:hover { background: #7A9877; transform: scale(1.02); z-index: 10; }
+        .calendar-booking.blocked { background: #E74C3C; }
+        .calendar-booking.cancelled { background: #95A5A6; text-decoration: line-through; }
+        .gantt-block-bar { position: absolute; background: #E74C3C; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; z-index: 10; cursor: pointer; box-shadow: 0 3px 10px rgba(231, 76, 60, 0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.2s; pointer-events: auto; }
+        .gantt-block-bar:hover { background: #C0392B; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(231, 76, 60, 0.6); z-index: 20; }
+        .add-block-btn { position: absolute; bottom: 5px; right: 5px; background: #E0E0E0; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: all 0.2s; }
+        .calendar-day-cell:hover .add-block-btn { opacity: 1; }
+        .add-block-btn:hover { background: #E74C3C; color: white; }
+        .calendar-legend { display: flex; gap: 20px; padding: 20px 30px; background: #F8F9FA; border-top: 1px solid #E0E0E0; flex-wrap: wrap; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .legend-color { width: 16px; height: 16px; border-radius: 3px; }
+        .legend-color.booking { background: #8BA888; }
+        .legend-color.blocked { background: #E74C3C; }
+        .legend-color.cancelled { background: #95A5A6; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s; min-height: 44px; -webkit-tap-highlight-color: rgba(0,0,0,0.1); }
+        .btn:active { transform: scale(0.95); }
+        .btn-primary { background: #8BA888; color: white; }
+        .btn-primary:hover { background: #7A9877; }
+        .btn-success { background: #7ED3B2; color: white; }
+        .btn-success:hover { background: #6BC4A3; }
+        .btn-danger { background: #E74C3C; color: white; }
+        .btn-danger:hover { background: #C0392B; }
+        .btn-secondary { background: #E0E0E0; color: #2C3E50; }
+        .btn-secondary:hover { background: #D0D0D0; }
+        .btn-small { padding: 6px 12px; font-size: 13px; }
+        .bookings-list { display: flex; flex-direction: column; gap: 15px; }
+        .booking-card { background: #F8F9FA; padding: 20px; border-radius: 10px; border-left: 4px solid #8BA888; }
+        .booking-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; }
+        .booking-time { font-size: 18px; font-weight: 600; color: #2C3E50; }
+        .booking-date { color: #7F8C8D; font-size: 14px; margin-top: 4px; }
+        .booking-status { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .status-confirmed { background: #D4EDDA; color: #155724; }
+        .status-blocked { background: #F8D7DA; color: #721C24; }
+        .status-cancelled { background: #F8D7DA; color: #721C24; }
+        .booking-client { margin-bottom: 12px; }
+        .client-name { font-size: 16px; font-weight: 600; color: #8BA888; margin-bottom: 8px; }
+        .client-contact { display: flex; flex-wrap: wrap; gap: 15px; font-size: 14px; color: #7F8C8D; }
+        .booking-notes { background: white; padding: 12px; border-radius: 6px; font-size: 14px; color: #2C3E50; margin-bottom: 15px; }
+        .booking-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 12px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .modal-header { padding: 20px; border-bottom: 1px solid #E0E0E0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 20px; font-weight: 600; color: #2C3E50; }
+        .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: #7F8C8D; }
+        .modal-body { padding: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 600; color: #2C3E50; font-size: 14px; }
+        .form-input { width: 100%; padding: 10px; border: 2px solid #E0E0E0; border-radius: 6px; font-size: 14px; }
+        .form-input:focus { outline: none; border-color: #8BA888; }
+        textarea.form-input { resize: vertical; min-height: 80px; }
+        .modal-footer { padding: 20px; border-top: 1px solid #E0E0E0; display: flex; gap: 10px; justify-content: flex-end; }
+        .booking-detail-card { background: #F8F9FA; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .booking-detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #E0E0E0; }
+        .booking-detail-row:last-child { border-bottom: none; }
+        .booking-detail-label { font-weight: 600; color: #7F8C8D; }
+        .booking-detail-value { color: #2C3E50; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #7F8C8D; }
+        .empty-icon { font-size: 64px; margin-bottom: 20px; opacity: 0.5; }
+        @media (max-width: 768px) {
+            .header { padding: 15px 20px; }
+            .header-top { flex-direction: column; gap: 15px; align-items: stretch; }
+            .header-right { flex-direction: column; }
+            .nav-tabs { width: 100%; }
+            .nav-tab { flex: 1; text-align: center; }
+            .container { padding: 20px 10px; }
+            .calendar-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .calendar-header-main { flex-direction: column; }
+            .calendar-day-cell { min-height: 80px; padding: 4px; }
+            .calendar-booking { font-size: 10px; padding: 2px 4px; }
+            .booking-actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-top">
+            <div class="logo">🌿 TEJASE Booking System</div>
+            <div class="header-right">
+                <div class="user-info">
+                    <div class="avatar">D</div>
+                    <span>Danielle</span>
+                </div>
+                <button class="btn-logout" onclick="window.location.href='settings.html'" style="background: #8BA888; margin-right: 10px;">⚙️ Settings</button>
+                <button class="btn-logout" onclick="clearAllData()" style="background: #F39C12; margin-right: 10px;">Clear All Data</button>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+            <button class="nav-tab" onclick="showTab('calendar')">📅 Calendar</button>
+        </div>
+    </div>
+    <div class="container">
+        <div class="tab-content active" id="dashboardTab">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-value" id="todayCount">0</div><div class="stat-label">Today's Bookings</div></div>
+                <div class="stat-card"><div class="stat-value" id="weekCount">0</div><div class="stat-label">This Week</div></div>
+                <div class="stat-card"><div class="stat-value" id="monthCount">0</div><div class="stat-label">This Month</div></div>
+                <div class="stat-card"><div class="stat-value" id="totalCount">0</div><div class="stat-label">Total Bookings</div></div>
+            </div>
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Upcoming Appointments</h2>
+                    <button class="btn" onclick="clearAllDataIpad()" style="background: #E67E22; color: white;">🗑️ Clear All Test Data</button>
+                </div>
+                <div class="section-content"><div class="bookings-list" id="upcomingList"></div></div>
+            </div>
+        </div>
+        <div class="tab-content" id="calendarTab">
+            <div class="calendar-view">
+                <div class="calendar-header-main">
+                    <div class="calendar-nav">
+                        <button class="calendar-nav-btn" onclick="changeMonth(-1)">‹ Previous</button>
+                        <div class="current-month-display" id="currentMonthDisplay">January 2026</div>
+                        <button class="calendar-nav-btn" onclick="changeMonth(1)">Next ›</button>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="showQuickBlockModal()">🚫 Block Time</button>
+                        <button class="btn" onclick="showDebugInfo()" style="background: #3498DB; color: white; font-size: 16px; padding: 12px 20px;">🔍 Show Data</button>
+                        <button class="btn" onclick="clearAllDataIpad()" style="background: #E67E22; color: white; font-size: 16px; padding: 12px 20px;">🗑️ Clear All</button>
+                    </div>
+                </div>
+                <div class="calendar-wrapper" style="position: relative;">
+                    <div class="calendar-grid-main" id="calendarGridMain"></div>
+                    <div id="blockBarsContainer" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;"></div>
+                </div>
+                <div class="calendar-legend">
+                    <div class="legend-item"><div class="legend-color booking"></div><span>Booked Appointments</span></div>
+                    <div class="legend-item"><div class="legend-color blocked"></div><span>Blocked Time (Continuous Bar)</span></div>
+                    <div class="legend-item"><div class="legend-color cancelled"></div><span>Cancelled</span></div>
+                </div>
+                <div style="padding: 15px; text-align: center; color: #7F8C8D; font-size: 13px; background: #F8F9FA; border-top: 1px solid #E0E0E0;">💡 Tip: On smaller screens, scroll horizontally to see the full calendar. Hover over red bars to see details, click to manage.</div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="bookingDetailModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 class="modal-title">Booking Details</h3><button class="close-modal" onclick="closeModal('bookingDetailModal')">&times;</button></div>
+            <div class="modal-body"><div class="booking-detail-card" id="bookingDetailContent"></div><div id="bookingDetailActions"></div></div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('bookingDetailModal')">Close</button></div>
+        </div>
+    </div>
+    <div class="modal" id="blockTimeModal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 class="modal-title">Block Time</h3><button class="close-modal" onclick="closeModal('blockTimeModal')">&times;</button></div>
+            <div class="modal-body">
+                <div style="background: #FFF3CD; border: 1px solid #FFE69C; border-radius: 6px; padding: 12px; margin-bottom: 20px;"><strong>💡 Tip:</strong> Block a date range (like vacation) or specific time slots on one day</div>
+                <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="blockStartDate" onchange="updateBlockEndDateMin()"></div>
+                <div class="form-group"><label class="form-label">End Date</label><input type="date" class="form-input" id="blockEndDate"><small style="color: #7F8C8D; margin-top: 5px; display: block;">Leave same as start date to block just one day</small></div>
+                <div class="form-group"><label class="form-label"><input type="checkbox" id="blockAllDay" onchange="toggleTimeInputs()" style="margin-right: 8px;">Block entire day(s)</label></div>
+                <div id="timeRangeInputs">
+                    <div class="form-group"><label class="form-label">Start Time</label><select class="form-input" id="blockStartTime" onchange="updateBlockEndTimeMin()"><option value="09:00">9:00 AM</option><option value="10:00">10:00 AM</option><option value="11:00">11:00 AM</option><option value="12:00">12:00 PM</option><option value="13:00">1:00 PM</option><option value="14:00">2:00 PM</option><option value="15:00">3:00 PM</option><option value="16:00">4:00 PM</option><option value="17:00">5:00 PM</option></select></div>
+                    <div class="form-group"><label class="form-label">End Time</label><select class="form-input" id="blockEndTime"><option value="10:00">10:00 AM</option><option value="11:00">11:00 AM</option><option value="12:00">12:00 PM</option><option value="13:00">1:00 PM</option><option value="14:00">2:00 PM</option><option value="15:00">3:00 PM</option><option value="16:00">4:00 PM</option><option value="17:00" selected>5:00 PM</option></select><small style="color: #7F8C8D; margin-top: 5px; display: block;">End time must be after start time</small></div>
+                </div>
+                <div class="form-group"><label class="form-label">Reason (Optional)</label><input type="text" class="form-input" id="blockReason" placeholder="e.g., Vacation, Lunch break, Meeting"></div>
+                <div style="background: #F8F9FA; border-radius: 6px; padding: 12px; margin-top: 15px;"><strong>Preview:</strong><div id="blockPreview" style="margin-top: 8px; color: #555;">Fill in the dates to see what will be blocked</div></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('blockTimeModal')">Cancel</button><button class="btn btn-danger" onclick="saveBlockedTime()">Block Time</button></div>
+        </div>
+    </div>
+    <script>
+        const STORAGE_KEY = 'danielleBookingsV2';
+        let currentCalendarMonth = new Date();
+        let currentActiveTab = 'dashboard';
+        
+        function init() { loadUpcomingBookings(); updateStats(); generateMainCalendar(); }
+        function showTab(tabName) {
+            currentActiveTab = tabName;
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            if (tabName === 'dashboard') { document.getElementById('dashboardTab').classList.add('active'); loadUpcomingBookings(); }
+            else if (tabName === 'calendar') { document.getElementById('calendarTab').classList.add('active'); generateMainCalendar(); }
+        }
+        function generateMainCalendar() {
+            const grid = document.getElementById('calendarGridMain');
+            grid.innerHTML = '';
+            const year = currentCalendarMonth.getFullYear();
+            const month = currentCalendarMonth.getMonth();
+            const monthName = currentCalendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            document.getElementById('currentMonthDisplay').textContent = monthName;
+            const dayHeaders = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            dayHeaders.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+            const bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const prevMonthDays = new Date(year, month, 0).getDate();
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = prevMonthDays - i;
+                const cell = createDayCell(day, true, year, month - 1);
+                grid.appendChild(cell);
+            }
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isToday = dateStr === todayStr;
+                const cell = createDayCell(day, false, year, month, isToday, dateStr, bookings);
+                grid.appendChild(cell);
+            }
+            const remainingCells = 42 - (firstDay + daysInMonth);
+            for (let day = 1; day <= remainingCells; day++) {
+                const cell = createDayCell(day, true, year, month + 1);
+                grid.appendChild(cell);
+            }
+            setTimeout(() => renderBlockBars(), 100);
+        }
+        function renderBlockBars() {
+            const container = document.getElementById('blockBarsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            container.style.pointerEvents = 'auto';
+            const bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const blockRanges = bookings.filter(b => b.type === 'block-range');
+            blockRanges.forEach(block => {
+                const startCell = document.querySelector(`[data-date="${block.startDate}"]`);
+                const endCell = document.querySelector(`[data-date="${block.endDate}"]`);
+                if (!startCell || !endCell) return;
+                const containerRect = container.getBoundingClientRect();
+                const startRect = startCell.getBoundingClientRect();
+                const endRect = endCell.getBoundingClientRect();
+                const top = startRect.top - containerRect.top + 35;
+                const left = startRect.left - containerRect.left + 4;
+                const width = (endRect.right - startRect.left) - 8;
+                const height = 24;
+                const startDateFormatted = formatDateShort(block.startDate);
+                const endDateFormatted = formatDateShort(block.endDate);
+                const startTimeText = block.allDay ? 'All Day' : formatTime(block.startTime);
+                const endTimeText = block.allDay ? 'All Day' : formatTime(block.endTime);
+                const bar = document.createElement('div');
+                bar.className = 'gantt-block-bar';
+                bar.style.top = `${top}px`;
+                bar.style.left = `${left}px`;
+                bar.style.width = `${width}px`;
+                bar.style.height = `${height}px`;
+                bar.textContent = `🚫 ${block.reason || 'BLOCKED'} (${startDateFormatted}, ${startTimeText} / ${endDateFormatted}, ${endTimeText})`;
+                bar.title = `Click for details`;
+                bar.onclick = () => { showBlockRangeDetail(block.id); };
+                container.appendChild(bar);
+            });
+        }
+        function createDayCell(day, isOtherMonth, year, month, isToday = false, dateStr = '', bookings = []) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-day-cell';
+            if (isOtherMonth) cell.classList.add('other-month');
+            if (isToday) cell.classList.add('today');
+            const dayNumber = document.createElement('div');
+            dayNumber.className = 'day-number';
+            dayNumber.textContent = day;
+            cell.appendChild(dayNumber);
+            if (!isOtherMonth && dateStr) {
+                const regularBookings = bookings.filter(b => b.type !== 'block-range' && b.date === dateStr);
+                const bookingsContainer = document.createElement('div');
+                bookingsContainer.className = 'day-bookings';
+                regularBookings.forEach(booking => {
+                    const bookingEl = document.createElement('div');
+                    bookingEl.className = 'calendar-booking';
+                    if (booking.status === 'cancelled') bookingEl.classList.add('cancelled');
+                    bookingEl.textContent = `${formatTime(booking.time)} - ${booking.name}`;
+                    bookingEl.onclick = (e) => { e.stopPropagation(); showBookingDetail(booking.id); };
+                    bookingsContainer.appendChild(bookingEl);
+                });
+                if (bookingsContainer.children.length > 0) cell.appendChild(bookingsContainer);
+                cell.dataset.date = dateStr;
+                const blockBtn = document.createElement('button');
+                blockBtn.className = 'add-block-btn';
+                blockBtn.innerHTML = '🚫';
+                blockBtn.title = 'Block this time';
+                blockBtn.onclick = (e) => { e.stopPropagation(); showBlockModal(dateStr); };
+                cell.appendChild(blockBtn);
+            }
+            return cell;
+        }
+        function changeMonth(direction) { currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() + direction); generateMainCalendar(); }
+        function showBookingDetail(id) {
+            const bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const booking = bookings.find(b => b.id === id);
+            if (!booking) return;
+            const detailContent = document.getElementById('bookingDetailContent');
+            const actionsContent = document.getElementById('bookingDetailActions');
+            detailContent.innerHTML = `<div class="booking-detail-row"><span class="booking-detail-label">Date:</span><span class="booking-detail-value">${formatDate(booking.date)}</span></div><div class="booking-detail-row"><span class="booking-detail-label">Time:</span><span class="booking-detail-value">${formatTime(booking.time)}</span></div><div class="booking-detail-row"><span class="booking-detail-label">Name:</span><span class="booking-detail-value">${booking.name}</span></div><div class="booking-detail-row"><span class="booking-detail-label">Email:</span><span class="booking-detail-value">${booking.email}</span></div><div class="booking-detail-row"><span class="booking-detail-label">Phone:</span><span class="booking-detail-value">${booking.phone}</span></div>${booking.notes ? `<div class="booking-detail-row"><span class="booking-detail-label">Notes:</span><span class="booking-detail-value">${booking.notes}</span></div>` : ''}<div class="booking-detail-row"><span class="booking-detail-label">Status:</span><span class="booking-detail-value">${(booking.status || 'confirmed').toUpperCase()}</span></div>`;
+            if (booking.status !== 'blocked') {
+                actionsContent.innerHTML = `<div class="booking-actions" style="margin-top: 15px;"><button class="btn btn-danger btn-small" onclick="cancelBooking(${booking.id}); closeModal('bookingDetailModal');">❌ Cancel</button></div>`;
+            } else {
+                actionsContent.innerHTML = `<div class="booking-actions" style="margin-top: 15px;"><button class="btn btn-danger btn-small" onclick="deleteBlockedTime(${booking.id}); closeModal('bookingDetailModal');">🗑️ Remove Block</button></div>`;
+            }
+            showModal('bookingDetailModal');
+        }
+        function showBlockRangeDetail(id) {
+            const bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const block = bookings.find(b => b.id === id && b.type === 'block-range');
+            if (!block) return;
+            const detailContent = document.getElementById('bookingDetailContent');
+            const actionsContent = document.getElementById('bookingDetailActions');
+            const startDateText = formatDateShort(block.startDate);
+            const endDateText = formatDateShort(block.endDate);
+            const startTimeText = block.allDay ? 'All Day' : formatTime(block.startTime);
+            const endTimeText = block.allDay ? 'All Day' : formatTime(block.endTime);
+            const dayCount = block.dates.length;
+            detailContent.innerHTML = `<div class="booking-detail-row"><span class="booking-detail-label">Type:</span><span class="booking-detail-value">Blocked Time Range</span></div><div class="booking-detail-row"><span class="booking-detail-label">Block Period:</span><span class="booking-detail-value">${startDateText}, ${startTimeText} / ${endDateText}, ${endTimeText}</span></div><div class="booking-detail-row"><span class="booking-detail-label">Duration:</span><span class="booking-detail-value">${dayCount} ${dayCount === 1 ? 'day' : 'days'}</span></div><div class="booking-detail-row"><span class="booking-detail-label">Start:</span><span class="booking-detail-value">${formatDate(block.startDate)} at ${startTimeText}</span></div><div class="booking-detail-row"><span class="booking-detail-label">End:</span><span class="booking-detail-value">${formatDate(block.endDate)} at ${endTimeText}</span></div>${block.reason ? `<div class="booking-detail-row"><span class="booking-detail-label">Reason:</span><span class="booking-detail-value">${block.reason}</span></div>` : ''}<div class="booking-detail-row"><span class="booking-detail-label">Dates Included:</span><span class="booking-detail-value">${block.dates.map(d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })).join(', ')}</span></div>`;
+            actionsContent.innerHTML = `<div class="booking-actions" style="margin-top: 15px;"><button class="btn btn-danger btn-small" onclick="deleteBlockRange(${block.id}); closeModal('bookingDetailModal');">🗑️ Remove Entire Block</button></div>`;
+            showModal('bookingDetailModal');
+        }
+        function deleteBlockRange(id) {
+            if (!confirm('Remove this blocked time?\\n\\nTap OK to delete.')) return;
+            try {
+                let bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+                bookings = bookings.filter(b => b.id !== id);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+                closeModal('bookingDetailModal');
+                setTimeout(() => { generateMainCalendar(); loadUpcomingBookings(); updateStats(); alert('✅ Block deleted!'); }, 100);
+            } catch (error) { alert('Error deleting: ' + error.message); }
+        }
+        function showBlockModal(dateStr) {
+            document.getElementById('blockStartDate').value = dateStr;
+            document.getElementById('blockEndDate').value = dateStr;
+            document.getElementById('blockAllDay').checked = false;
+            document.getElementById('blockReason').value = '';
+            updateBlockPreview();
+            showModal('blockTimeModal');
+        }
+        function showQuickBlockModal() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('blockStartDate').value = today;
+            document.getElementById('blockEndDate').value = today;
+            document.getElementById('blockAllDay').checked = false;
+            document.getElementById('blockReason').value = '';
+            updateBlockPreview();
+            showModal('blockTimeModal');
+        }
+        function toggleTimeInputs() {
+            const allDay = document.getElementById('blockAllDay').checked;
+            const timeInputs = document.getElementById('timeRangeInputs');
+            timeInputs.style.display = allDay ? 'none' : 'block';
+            updateBlockPreview();
+        }
+        function updateBlockEndDateMin() {
+            const startDate = document.getElementById('blockStartDate').value;
+            const endDateInput = document.getElementById('blockEndDate');
+            endDateInput.min = startDate;
+            if (endDateInput.value && endDateInput.value < startDate) endDateInput.value = startDate;
+            updateBlockPreview();
+        }
+        function updateBlockEndTimeMin() { updateBlockPreview(); }
+        function updateBlockPreview() {
+            const startDate = document.getElementById('blockStartDate').value;
+            const endDate = document.getElementById('blockEndDate').value;
+            const allDay = document.getElementById('blockAllDay').checked;
+            const startTime = document.getElementById('blockStartTime').value;
+            const endTime = document.getElementById('blockEndTime').value;
+            const reason = document.getElementById('blockReason').value;
+            const preview = document.getElementById('blockPreview');
+            if (!startDate) { preview.textContent = 'Fill in the dates to see what will be blocked'; return; }
+            const start = new Date(startDate + 'T00:00:00');
+            const end = endDate ? new Date(endDate + 'T00:00:00') : start;
+            const daysDiff = Math.floor((end - start) / (1000 * 60 * 60 * 24));
+            let previewText = '';
+            const startDateText = formatDateShort(startDate);
+            const endDateText = endDate ? formatDateShort(endDate) : startDateText;
+            const startTimeText = allDay ? 'All Day' : formatTime(startTime);
+            const endTimeText = allDay ? 'All Day' : formatTime(endTime);
+            if (daysDiff === 0) {
+                if (allDay) previewText = `Blocking: ${startDateText}, All Day`;
+                else previewText = `Blocking: ${startDateText}, ${startTimeText} - ${endTimeText}`;
+            } else {
+                previewText = `Blocking: ${startDateText}, ${startTimeText} / ${endDateText}, ${endTimeText}\\n(${daysDiff + 1} days total)`;
+            }
+            if (reason) previewText += `\\nReason: ${reason}`;
+            preview.style.whiteSpace = 'pre-line';
+            preview.textContent = previewText;
+        }
+        function saveBlockedTime() {
+            const startDate = document.getElementById('blockStartDate').value;
+            const endDate = document.getElementById('blockEndDate').value || startDate;
+            const allDay = document.getElementById('blockAllDay').checked;
+            const startTime = document.getElementById('blockStartTime').value;
+            const endTime = document.getElementById('blockEndTime').value;
+            const reason = document.getElementById('blockReason').value;
+            if (!startDate) { alert('Please select a start date'); return; }
+            if (!allDay) {
+                const startMinutes = parseInt(startTime.split(':')[0]) * 60 + parseInt(startTime.split(':')[1]);
+                const endMinutes = parseInt(endTime.split(':')[0]) * 60 + parseInt(endTime.split(':')[1]);
+                if (endMinutes <= startMinutes) { alert('End time must be after start time'); return; }
+            }
+            const bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const start = new Date(startDate + 'T00:00:00');
+            const end = new Date(endDate + 'T00:00:00');
+            const dates = [];
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                dates.push(d.toISOString().split('T')[0]);
+            }
+            const blockId = Date.now();
+            const blockedRange = {
+                id: blockId,
+                type: 'block-range',
+                startDate: startDate,
+                endDate: endDate,
+                startTime: allDay ? 'all-day' : startTime,
+                endTime: allDay ? 'all-day' : endTime,
+                allDay: allDay,
+                reason: reason || 'Time blocked by admin',
+                dates: dates,
+                status: 'blocked',
+                date: startDate,
+                time: allDay ? '09:00' : startTime,
+                name: '🚫 BLOCKED',
+                email: 'N/A',
+                phone: 'N/A',
+                notes: reason || 'Time blocked by admin',
+                createdAt: new Date().toISOString()
+            };
+            bookings.push(blockedRange);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+            closeModal('blockTimeModal');
+            generateMainCalendar();
+            if (currentActiveTab === 'dashboard') loadUpcomingBookings();
+            updateStats();
+            const daysText = dates.length === 1 ? 'day' : 'days';
+            const timeText = allDay ? 'All day' : `${formatTime(startTime)} - ${formatTime(endTime)}`;
+            alert(`✅ Blocked ${dates.length} ${daysText}!\\n${timeText}`);
+        }
+        function loadUpcomingBookings() {
+            const bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const today = new Date().toISOString().split('T')[0];
+            const upcoming = bookings.filter(b => {
+                return b.date >= today && b.status !== 'cancelled' && b.status !== 'blocked';
+            }).sort((a, b) => {
+                const dateA = new Date(a.date + 'T' + a.time);
+                const dateB = new Date(b.date + 'T' + b.time);
+                return dateA - dateB;
+            }).slice(0, 10);
+            displayBookings(upcoming, 'upcomingList');
+        }
+        function displayBookings(bookings, containerId) {
+            const container = document.getElementById(containerId);
+            if (bookings.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔭</div><h3>No upcoming bookings</h3><p>New bookings will appear here.</p></div>`;
+                return;
+            }
+            container.innerHTML = bookings.map(booking => `<div class="booking-card"><div class="booking-header"><div><div class="booking-time">${formatTime(booking.time)}</div><div class="booking-date">${formatDate(booking.date)}</div></div><span class="booking-status status-${booking.status || 'confirmed'}">${(booking.status || 'confirmed').toUpperCase()}</span></div><div class="booking-client"><div class="client-name">${booking.name}</div><div class="client-contact"><span>📧 ${booking.email}</span><span>📱 ${booking.phone}</span></div></div>${booking.notes ? `<div class="booking-notes">💬 ${booking.notes}</div>` : ''}<div class="booking-actions"><button class="btn btn-danger btn-small" onclick="cancelBooking(${booking.id})">❌ Cancel</button></div></div>`).join('');
+        }
+        function updateStats() {
+            const bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const activeBookings = bookings.filter(b => b.status !== 'cancelled' && b.status !== 'blocked');
+            const today = new Date().toISOString().split('T')[0];
+            const todayBookings = activeBookings.filter(b => b.date === today);
+            const weekStart = getWeekStart();
+            const weekEnd = getWeekEnd();
+            const weekBookings = activeBookings.filter(b => b.date >= weekStart && b.date <= weekEnd);
+            const monthStart = getMonthStart();
+            const monthEnd = getMonthEnd();
+            const monthBookings = activeBookings.filter(b => b.date >= monthStart && b.date <= monthEnd);
+            document.getElementById('todayCount').textContent = todayBookings.length;
+            document.getElementById('weekCount').textContent = weekBookings.length;
+            document.getElementById('monthCount').textContent = monthBookings.length;
+            document.getElementById('totalCount').textContent = activeBookings.length;
+        }
+        function cancelBooking(id) {
+            if (!confirm('Are you sure you want to cancel this booking?')) return;
+            const bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const index = bookings.findIndex(b => b.id === id);
+            if (index === -1) return;
+            bookings[index].status = 'cancelled';
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+            if (currentActiveTab === 'dashboard') loadUpcomingBookings();
+            else generateMainCalendar();
+            updateStats();
+            alert('❌ Booking cancelled');
+        }
+        function showModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function formatDate(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        function formatDateShort(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+        function formatTime(time) {
+            const [hours, minutes] = time.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+            return `${displayHour}:${minutes} ${ampm}`;
+        }
+        function getWeekStart() {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = today.getDate() - day;
+            const weekStart = new Date(today.setDate(diff));
+            return weekStart.toISOString().split('T')[0];
+        }
+        function getWeekEnd() {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = today.getDate() + (6 - day);
+            const weekEnd = new Date(today.setDate(diff));
+            return weekEnd.toISOString().split('T')[0];
+        }
+        function getMonthStart() {
+            const today = new Date();
+            return new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        }
+        function getMonthEnd() {
+            const today = new Date();
+            return new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+        }
+        function logout() { if (confirm('Are you sure you want to logout?')) alert('Logged out! (In a real app, this would return to login page)'); }
+        function showDebugInfo() {
+            const bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            const blocks = bookings.filter(b => b.type === 'block-range');
+            const regular = bookings.filter(b => b.type !== 'block-range');
+            let info = '📊 DATA INFO:\\n\\n';
+            info += `Total items: ${bookings.length}\\n`;
+            info += `Block ranges: ${blocks.length}\\n`;
+            info += `Regular bookings: ${regular.length}\\n\\n`;
+            if (blocks.length > 0) {
+                info += 'BLOCKS:\\n';
+                blocks.forEach((b, i) => { info += `${i+1}. ${b.reason || 'Block'} (${b.startDate} to ${b.endDate})\\n`; info += `   ID: ${b.id}\\n`; });
+            }
+            if (regular.length > 0) {
+                info += '\\nBOOKINGS:\\n';
+                regular.forEach((b, i) => { info += `${i+1}. ${b.name} on ${b.date} at ${b.time}\\n`; });
+            }
+            if (bookings.length === 0) info += '✅ No data stored - all clean!';
+            alert(info);
+        }
+        function clearAllDataIpad() {
+            const confirmed = confirm('🗑️ DELETE ALL DATA?\\n\\nThis will remove all bookings and blocks.\\n\\nTAP OK TO DELETE EVERYTHING');
+            if (!confirmed) return;
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+                alert('✅ CLEARED!\\n\\nAll data deleted.\\n\\nPage will reload now.');
+                setTimeout(() => { window.location.href = window.location.href + '?clear=' + Date.now(); }, 300);
+            } catch (error) {
+                try {
+                    localStorage.removeItem(STORAGE_KEY);
+                    alert('✅ Data cleared! Reloading...');
+                    window.location.reload(true);
+                } catch (e) { alert('⚠️ Could not clear automatically.\\n\\nPlease:\\n1. Close this tab completely\\n2. Close Safari\\n3. Reopen Safari\\n4. Open this file again'); }
+            }
+        }
+        function clearAllData() {
+            const count = (JSON.parse(localStorage.getItem(STORAGE_KEY)) || []).length;
+            if (count === 0) { alert('✅ No data to clear - already empty!'); return; }
+            if (confirm(`⚠️ WARNING: This will delete ${count} booking(s) and block(s)!\\n\\nAre you absolutely sure? This cannot be undone.`)) {
+                if (confirm('Final confirmation: Delete everything?')) {
+                    try {
+                        localStorage.removeItem(STORAGE_KEY);
+                        currentActiveTab = 'dashboard';
+                        loadUpcomingBookings();
+                        generateMainCalendar();
+                        updateStats();
+                        alert(`✅ Successfully deleted ${count} items! Starting fresh.`);
+                        location.reload();
+                    } catch (error) { alert('Error clearing data: ' + error.message); }
+                }
+            }
+        }
+        window.onload = init;
+        window.addEventListener('resize', () => { if (currentActiveTab === 'calendar') setTimeout(() => renderBlockBars(), 100); });
+        
+        // Load custom background image
+        function loadCustomBackground() {
+            try {
+                const settings = JSON.parse(localStorage.getItem('tejaseSettings'));
+                if (settings && settings.backgroundImage) {
+                    document.body.style.backgroundImage = `url(${settings.backgroundImage})`;
+                    console.log('✓ Custom background loaded on admin dashboard');
+                }
+            } catch (error) {
+                console.error('Error loading background:', error);
+            }
+        }
+        
+        loadCustomBackground();
+    </script>
+</body>
+</html>
