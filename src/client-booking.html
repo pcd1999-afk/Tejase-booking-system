@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book with TEJASE Healing Arts</title>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function(){
+            emailjs.init("zIAda6uCzok5KV_k5"); // Your Public Key
+        })();
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -651,7 +658,13 @@
             document.getElementById('reviewDetails').innerHTML = reviewHTML;
         }
         
-        function confirmBooking() {
+        async function confirmBooking() {
+            // Show loading state
+            const confirmBtn = document.getElementById('confirmBtn');
+            const originalText = confirmBtn.textContent;
+            confirmBtn.textContent = '📧 Sending emails...';
+            confirmBtn.disabled = true;
+            
             let bookings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
             
             const booking = {
@@ -664,6 +677,40 @@
             bookings.push(booking);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
             
+            // Send emails
+            try {
+                // Prepare email data
+                const emailData = {
+                    customer_name: bookingData.name,
+                    customer_email: bookingData.email,
+                    customer_phone: bookingData.phone,
+                    booking_date: formatDate(bookingData.date),
+                    booking_time: formatTime(bookingData.time),
+                    booking_notes: bookingData.notes || 'None'
+                };
+                
+                // Send admin notification
+                await emailjs.send(
+                    'service_yp4npbl',      // Your Service ID
+                    'template_7onycpe',      // Admin Template ID
+                    emailData
+                );
+                
+                // Send customer confirmation
+                await emailjs.send(
+                    'service_yp4npbl',      // Your Service ID
+                    'template_itwu6c8',      // Customer Template ID
+                    emailData
+                );
+                
+                console.log('✅ Emails sent successfully!');
+            } catch (error) {
+                console.error('❌ Email error:', error);
+                // Continue with booking even if email fails
+                alert('Booking saved! Note: Email notifications may have failed. Please contact the business to confirm.');
+            }
+            
+            // Show success page
             document.getElementById('finalDetails').innerHTML = document.getElementById('reviewDetails').innerHTML;
             
             document.querySelectorAll('.form-section').forEach(section => section.classList.remove('active'));
@@ -673,6 +720,10 @@
                 document.getElementById(`step${i}`).classList.remove('active');
                 document.getElementById(`step${i}`).classList.add('completed');
             }
+            
+            // Reset button
+            confirmBtn.textContent = originalText;
+            confirmBtn.disabled = false;
         }
         
         function formatDate(dateStr) {
